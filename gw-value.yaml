@@ -1,0 +1,152 @@
+replicaCount: 1
+
+image:
+  repository: [FULLREPO_ASIA]
+  pullPolicy: Always
+  containerPort: 5005
+  containerPortName: http
+  healthCheck:
+     livenessProbe:
+       httpGet:
+         path: /common/health_check
+         port: 5005
+         scheme: HTTP
+       failureThreshold: 3
+       initialDelaySeconds: 10
+       periodSeconds: 10
+       successThreshold: 1
+       timeoutSeconds: 3
+     readinessProbe:
+       httpGet:
+         path: /common/health_check
+         port: 5005
+         scheme: HTTP
+       failureThreshold: 3
+       initialDelaySeconds: 10
+       periodSeconds: 10
+       successThreshold: 1
+       timeoutSeconds: 3 
+  command: ["/bin/sh","-c"]
+  #args: ["python3 -u main.py"]
+  args: ["gunicorn --bind 0.0.0.0:5005 --workers=4 main:app --log-level=debug -c conf/gunicorn.py --timeout 0"]
+ 
+
+# gunicorn --bind 0.0.0.0:5005 --workers=1 manage:app
+imagePullSecrets:
+  - name: ktn-dapp-api
+nameOverride: "gw-storage-service-api-stag"
+fullnameOverride: "gw-storage-service-api-stag"
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: "default"
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+deployment:
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "180"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "180"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "180"
+    reloader.stakater.com/auto: "true"
+
+ingress:
+  enabled: false
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "*"
+ #   nginx.ingress.kubernetes.io/cors-allow-origin: "https://socket.rinz.io"
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      keepalive_timeout 0s;
+        
+  hosts:
+    - host: api.esollabs.com
+      paths: ["/"]
+  tls:  []
+    # - secretName: cms-stag-rinz-tls
+    #   hosts:
+    #     #- [IMAGE_NAME_CI].yeah1group.com
+    #     - cms-stag.rinz.io
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+  # podAntiAffinity:
+  #   requiredDuringSchedulingIgnoredDuringExecution:
+  #   - labelSelector:
+  #       matchExpressions:
+  #       - key: app.kubernetes.io/name
+  #         operator: In
+  #         values:
+  #         - onelive-website-dev
+  #     topologyKey: "kubernetes.io/hostname"
+
+extraInitContainers:
+  - command:
+    - sh
+    - -c
+    - sysctl -e -w net.core.somaxconn=32768; sysctl -e -w net.ipv4.ip_local_port_range="1025 65535"; sysctl -e -w net.core.netdev_max_backlog=32768; sysctl -e -w net.ipv4.tcp_max_syn_backlog=32768;
+    image: alpine:3.6 
+    imagePullPolicy: IfNotPresent
+    name: sysctl
+    resources: {}
+    securityContext:
+      privileged: true
+
+configmap: {} 
+  # api_key: "srvacc_kjxsiksnf1hef3bz4689ihgwb"
+  # secret_key: "4ur693qv8ui5tmznk2frwzphwbpx99wb"
+  # MONGODB_URI: "mongodb://rinz_staging_dapp_write:52QzvqJf2CfUBCZ6@13.212.45.166:27017/rinz_staging_dapp?authSource=admin"
+  # SENTRY_DSN: "https://49554daaba8949489b06f1db44590a38@sentry.rinznetwork.com/45"
+  # NODE_ENV: "development"
+
+secret: 
+  enabled: true
+  keyValues:
+    REDIS_HOST: "esol-staging-redis-standalone.fxy0up.ng.0001.apse1.cache.amazonaws.com"
+    REDIS_PORT: "6379"
+    AUTH_ADDRESS: "0x00"
+    BUCKET_NAME: "test-s3"
+    S3_ENDPOINT: "https://s3-hn-2.cloud.cmctelecom.vn"
+    S3_ACCESS_KEY: "SP1K94C9TT6KMOCU2WRO"
+    S3_SECRET_KEY: "cEAogZqv7QRltnbMDWgZrf1N2fnpbtm3Gxftvc3C"
+    
+secretFiles:
+
+externalSecret:
+  enabled: false
+  secretStoreName: cluster-secretstore-stag
+  refreshInterval: 1m
+  secretManagerName: stag-test
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 70
