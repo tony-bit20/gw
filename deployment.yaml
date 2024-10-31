@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: python-api
+  template:
+    metadata:
+      labels:
+        app: python-api
+    spec:
+      containers:
+      - name: python-api
+        image: your_docker_image  # Thay đổi với image đã xây dựng
+        ports:
+        - containerPort: 5000
+        env:
+        - name: POSTGRES_HOST
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: POSTGRES_HOST
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: POSTGRES_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: POSTGRES_PASSWORD
+        - name: REDIS_HOST
+          valueFrom:
+            secretKeyRef:
+              name: redis-secrets
+              key: REDIS_HOST
