@@ -68,6 +68,10 @@ jobs:
         mkdir -p ~/.kube
         mv kubeconfig ~/.kube/config
 
+    - name: Deploy to Kubernetes-secret
+      run: |
+        kubectl create secret generic app-secrets --from-env-file=.env
+
     - name: Deploy to Kubernetes
       run: |
         kubectl apply -f deployment.yaml --validate=false
