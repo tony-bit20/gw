@@ -27,18 +27,35 @@ jobs:
       run: |
         pip install -r requirements.txt
 
-    - name: Create .env file
+    # - name: Create .env file
+    #   run: |
+    #     echo "POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}" >> .env
+    #     echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
+    #     echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
+    #     echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
+    #     echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> .env
+    
+    - name: Clone .env repository
+      env:
+        ENV_REPO_URL: ${{ secrets.ENV_REPO_URL }}
+        ENV_REPO_TOKEN: ${{ secrets.ENV_REPO_TOKEN }}
       run: |
-        echo "POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}" >> .env
-        echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
-        echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
-        echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
-        echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> .env
+        touch .env
+        git clone "https://${ENV_REPO_TOKEN}@${ENV_REPO_URL}" test-env
+        cp test-env/.env .env
+
+    - name: Run tests
+      run: |
+        ls -alh
+
+    - name: Run tests
+      run: |
+        cat .env
 
     - name: Run tests
       run: |
         python -m unittest discover
- 
+    
     - name: Docker login
       run: |
         docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
@@ -68,11 +85,11 @@ jobs:
         mkdir -p ~/.kube
         mv kubeconfig ~/.kube/config
 
-    - name: Deploy to Kubernetes-secret
-      run: |
-        kubectl create secret generic app-secrets --from-env-file=.env
+    # - name: Deploy to Kubernetes-secret
+    #   run: |
+    #     kubectl create secret generic app-secrets --from-env-file=.env
 
-    - name: Deploy to Kubernetes
-      run: |
-        kubectl apply -f deployment.yaml --validate=false
+    # - name: Deploy to Kubernetes
+    #   run: |
+    #     kubectl apply -f deployment.yaml --validate=false
 
