@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: python-api
-        image: your_docker_image  # Thay đổi với image đã xây dựng
+        image: [IMAGE]
         ports:
         - containerPort: 5000
         env:
