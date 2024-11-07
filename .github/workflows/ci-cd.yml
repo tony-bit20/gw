@@ -36,13 +36,11 @@ jobs:
     #     echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> .env
     
     - name: Clone .env repository
-      env:
-        ENV_REPO_URL: ${{ secrets.ENV_REPO_URL }}
-        ENV_REPO_TOKEN: ${{ secrets.ENV_REPO_TOKEN }}
       run: |
         touch .env
-        git clone "https://${ENV_REPO_TOKEN}@${ENV_REPO_URL}" test-env
+        git clone "https://${{ secrets.ENV_REPO_TOKEN }}@${{ secrets.ENV_REPO_URL }}" test-env
         cp test-env/.env .env
+        rm -rf test-env
 
     - name: Run tests
       run: |
